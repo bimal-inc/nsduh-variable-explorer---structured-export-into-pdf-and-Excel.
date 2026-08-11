@@ -1,0 +1,124 @@
+<div class="variable" x-data='variableCard(<%- JSON.stringify({id: variable.id, datasetSlug: variable.dataset_slug, code: variable.code, label: variable.label || variable.question || variable.code, codebookCategory: variable.section || variable.category || "Uncategorized", optionIds: variable.options.map(o=>o.id)}) %>)' x-init="init()">
+  <div class="row between variable-header">
+    <div>
+      <div class="row wrap compact-row">
+        <span class="eyebrow"><%= variable.section || variable.category || 'Variable' %></span>
+        <% if (variable.dataset?.source_type === 'codebook') { %><span class="source-chip codebook">PDF codebook</span><% } else { %><span class="source-chip">SAMHSA JSON</span><% } %>
+      </div>
+      <h2><%= variable.code %></h2>
+      <div class="variable-subtitle"><%= variable.label || '(No variable label)' %></div>
+    </div>
+    <button type="button" class="select-variable-btn" :class="isSelected ? 'selected' : ''" @click.prevent="toggleVariable()">
+      <span x-text="isSelected ? '✓ Selected for export' : '+ Select variable for export'"></span>
+    </button>
+  </div>
+
+  <% if (variable.dataset?.source_type === 'codebook') { %>
+    <section class="codebook-facts">
+      <div><span>Section</span><strong><%= variable.section || '—' %></strong></div>
+      <div><span>Question ID</span><strong><%= variable.question_id ? '(' + variable.question_id + ')' : '—' %></strong></div>
+      <div><span>Codebook page</span><strong><%= variable.codebook_page || variable.page || '—' %></strong></div>
+      <div><span>PDF page</span><strong><%= variable.pdf_page || '—' %></strong></div>
+      <div><span>Length</span><strong><%= variable.length || '—' %></strong></div>
+      <div><span>Values</span><strong><%= variable.options.length %></strong></div>
+    </section>
+  <% } %>
+
+  <section class="info-block primary-info">
+    <div class="info-label">Variable label</div>
+    <div class="info-value strong"><%= variable.label || '(No label supplied)' %></div>
+  </section>
+
+  <% if (variable.question) { %>
+    <section class="info-block question-block">
+      <div class="info-label">Full question wording</div>
+      <div class="question-text"><%= variable.question %></div>
+    </section>
+  <% } else if (variable.question_fields && variable.question_fields.length) { %>
+    <section class="info-block question-block">
+      <div class="info-label">Question wording</div>
+      <% variable.question_fields.forEach(q => { %>
+        <div class="question-entry"><code><%= q.key %></code><div><%= q.value %></div></div>
+      <% }) %>
+    </section>
+  <% } else { %>
+    <section class="info-block no-question">
+      <div class="info-label">Question wording</div>
+      <div>No separate question wording was available in this source record.</div>
+    </section>
+  <% } %>
+
+  <% if (variable.notes || variable.description) { %>
+    <section class="info-block notes-block">
+      <div class="info-label">Notes / definitions</div>
+      <div><%= variable.notes || variable.description %></div>
+    </section>
+  <% } %>
+
+  <% if (variable.dataset?.source_type !== 'codebook') { %>
+    <div class="meta">
+      <span><strong>Code:</strong> <%= variable.code %></span>
+      <% if(variable.remote_id){%><span><strong>SAMHSA ID:</strong> <%= variable.remote_id %></span><%}%>
+      <% if(variable.page){%><span><strong>Page:</strong> <%= variable.page %></span><%}%>
+      <% if(variable.length){%><span><strong>Length:</strong> <%= variable.length %></span><%}%>
+      <% if(variable.default_weight){%><span><strong>Weight:</strong> <%= variable.default_weight %></span><%}%>
+      <% if(variable.stratum){%><span><strong>Stratum:</strong> <%= variable.stratum %></span><%}%>
+      <% if(variable.cluster){%><span><strong>Cluster:</strong> <%= variable.cluster %></span><%}%>
+    </div>
+  <% } %>
+
+  <div class="row between options-title">
+    <div>
+      <h3>Response / value codes (<%= variable.options.length %>)</h3>
+      <p class="hint option-hint">Check only the values you want to export. If none are checked, all value rows for this variable are exported.</p>
+    </div>
+    <% if(variable.options.length){%>
+      <button type="button" class="secondary" @click.prevent="toggleAllOptions()" x-text="allOptionsSelected ? 'Clear option filter' : 'Select every option'"></button>
+    <%}%>
+  </div>
+
+  <% if (variable.options.length) { %>
+    <div class="value-table-wrap">
+      <table class="value-table">
+        <thead><tr><th class="check-col"></th><th>Code / range</th><th>Description</th><th>Freq</th><th>Pct</th></tr></thead>
+        <tbody>
+        <% variable.options.forEach(o => { %>
+          <tr :class="isOptionSelected(<%= o.id %>) ? 'option-selected' : ''">
+            <td><input type="checkbox" :checked="isOptionSelected(<%= o.id %>)" @change="toggleOption(<%= o.id %>)" /></td>
+            <td><code><%= o.option_key || '' %></code></td>
+            <td>
+              <%= o.description || o.title || '' %>
+              <% if(o.raw_line){%><details class="raw-line"><summary>raw codebook row</summary><code><%= o.raw_line %></code></details><%}%>
+              <% if(o.missing){%><em class="flag">missing</em><%}%>
+              <% if(o.nonresponse){%><em class="flag">nonresponse</em><%}%>
+            </td>
+            <td class="num"><%= o.frequency == null ? '' : Number(o.frequency).toLocaleString('en-US') %></td>
+            <td class="num"><%= o.percent == null ? '' : Number(o.percent).toFixed(2) %></td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } else { %>
+    <p class="empty small-empty">No coded values were parsed for this variable.</p>
+  <% } %>
+
+  <% if (variable.filters && variable.filters.length) { %>
+    <details class="metadata-details"><summary>Facet / filter classification</summary><pre class="compact-json"><%= JSON.stringify(variable.filters, null, 2) %></pre></details>
+  <% } %>
+
+  <details class="metadata-details">
+    <summary>All normalized metadata</summary>
+    <div class="metadata-table">
+      <div class="metadata-row"><code>dataset_slug</code><div><%= variable.dataset_slug %></div></div>
+      <% (variable.metadata || []).forEach(m => { %>
+        <div class="metadata-row"><code><%= m.key %></code><div><%= m.value %></div></div>
+      <% }) %>
+    </div>
+  </details>
+
+  <details>
+    <summary>Raw source JSON for this variable</summary>
+    <pre><%= JSON.stringify(variable.raw, null, 2) %></pre>
+  </details>
+</div>

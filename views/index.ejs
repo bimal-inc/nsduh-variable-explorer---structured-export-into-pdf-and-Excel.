@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NSDUH Variable Explorer</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://unpkg.com/htmx.org@2.0.6"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body x-data="nsduhApp()" x-init="init()">
+  <header>
+    <div>
+      <h1>NSDUH Variable Explorer</h1>
+      <p>Parse codebooks, search full question text, select response codes, and export.</p>
+    </div>
+    <div class="badge"><span x-text="selectedCount"></span> variables selected</div>
+  </header>
+
+  <main>
+    <section class="toolbar card">
+      <div class="toolbar-grid">
+        <div>
+          <label for="dataset">Active codebook / dataset</label>
+          <select id="dataset" name="dataset" x-model="dataset" @change="changeDataset($event.target.value)">
+            <% if (!datasets.length) { %>
+              <option value="NSDUH-2021-DS0001">NSDUH-2021-DS0001</option>
+            <% } %>
+            <% datasets.forEach(d => { %>
+              <option value="<%= d.slug %>" <%= d.slug === dataset ? 'selected' : '' %>>
+                <%= d.source_type === 'codebook' ? 'Codebook: ' : 'SAMHSA: ' %><%= d.display_name || d.slug %> (<%= d.variable_count %> variables)
+              </option>
+            <% }) %>
+          </select>
+          <p class="hint">Changing this switches the searchable variable library.</p>
+        </div>
+
+        <div class="upload-box">
+          <div class="upload-title">Parse a new NSDUH codebook PDF</div>
+          <form hx-post="/api/codebook" hx-encoding="multipart/form-data" hx-target="#import-status" hx-indicator="#codebook-spinner">
+            <div class="row wrap">
+              <input type="file" name="codebook" accept="application/pdf,.pdf" required />
+              <button type="submit">Upload & Parse Codebook</button>
+              <span id="codebook-spinner" class="htmx-indicator">Parsing PDF… this can take a moment.</span>
+            </div>
+          </form>
+          <p class="hint">The Python parser extracts section, PDF/codebook page, question ID, full question wording, notes, value codes, frequency, and percentage.</p>
+        </div>
+      </div>
+
+      <details class="legacy-import">
+        <summary>Optional: import the SAMHSA website JSON instead</summary>
+        <div class="row wrap legacy-row">
+          <label>SAMHSA dataset slug
+            <input id="samhsa-slug" value="NSDUH-2021-DS0001" />
+          </label>
+          <button hx-post="/api/import" hx-vals='js:{slug: document.getElementById("samhsa-slug").value}' hx-target="#import-status" hx-indicator="#spinner">Import / Refresh from SAMHSA</button>
+          <span id="spinner" class="htmx-indicator">Fetching metadata…</span>
+        </div>
+      </details>
+      <div id="import-status"></div>
+    </section>
+
+    <section class="grid">
+      <aside class="card search-panel">
+        <h2>Search</h2>
+        <input id="variable-search" type="search" name="q" placeholder="Alcohol, first drink, past 30 days…"
+          hx-get="/search" hx-trigger="input changed delay:250ms, search" hx-target="#results"
+          hx-include="#dataset" />
+        <p class="hint">Searches variable code/name, Question ID, variable label, and question wording.</p>
+        <div id="results" hx-get="/search" hx-trigger="load" hx-include="#dataset"></div>
+      </aside>
+
+      <section class="card detail-panel">
+        <div id="detail" class="empty">Choose a variable from the search results.</div>
+      </section>
+
+      <aside class="card selection-panel">
+        <div class="row between"><h2>Selected</h2><button class="secondary" @click="clearAll()">Clear</button></div>
+        <section class="preset-panel">
+          <div class="preset-save-row">
+            <input type="text" x-model="presetName" @keydown.enter.prevent="savePreset()" placeholder="Preset name" aria-label="Preset name" />
+            <button type="button" @click="savePreset()">Save preset</button>
+          </div>
+          <template x-for="preset in currentPresets" :key="preset.id">
+            <div class="preset-item">
+              <button type="button" class="preset-load" @click="loadPreset(preset)">
+                <strong x-text="preset.name"></strong>
+                <small><span x-text="preset.selections.length + ' variables'"></span> · <span x-text="formatPresetDate(preset.savedAt)"></span></small>
+              </button>
+              <button type="button" class="link danger" @click="deletePreset(preset.id)">Delete</button>
+            </div>
+          </template>
+        </section>
+        <input class="selected-search" type="search" x-model="selectedSearch" placeholder="Search selected variables…" aria-label="Search selected variables" />
+        <template x-if="selectedCount === 0"><p class="empty">Nothing selected in this codebook yet.</p></template>
+        <template x-if="selectedCount > 0 && filteredSelectedCount === 0"><p class="empty">No selected variables found.</p></template>
+        <template x-for="group in groupedSelections" :key="group.name">
+          <section class="selection-main-category">
+            <div class="selection-category-heading">
+              <strong x-text="group.name"></strong>
+              <div class="selection-category-actions">
+                <span x-text="group.count + ' variables'"></span>
+                <button type="button" class="link danger remove-category" @click="removeMainCategory(group.name)">Remove all</button>
+              </div>
+            </div>
+            <template x-for="subcategory in group.subcategories" :key="subcategory.name">
+              <div class="selection-subcategory">
+                <div class="selection-subcategory-heading"><span x-text="subcategory.name"></span><small x-text="subcategory.items.length"></small></div>
+                <template x-for="item in subcategory.items" :key="item.variableId">
+                  <div class="selected-item clickable-selected" role="button" tabindex="0" @click="openSelectedVariable(item.variableId)" @keydown.enter.prevent="openSelectedVariable(item.variableId)">
+                    <strong x-text="item.code"></strong>
+                    <span x-text="item.label"></span>
+                    <small x-text="item.optionIds.length ? item.optionIds.length + ' response options' : 'all response options'"></small>
+                    <button class="link danger" @click.stop="removeVariable(item.variableId)">Remove</button>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </section>
+        </template>
+        <div class="export-actions">
+          <button @click="exportFile('xlsx')" :disabled="selectedCount===0">Export Excel</button>
+          <button @click="exportFile('pdf')" :disabled="selectedCount===0">Export PDF</button>
+        </div>
+      </aside>
+    </section>
+  </main>
+  <div class="modal-backdrop" x-show="categoryDialogOpen" x-cloak @keydown.escape.window="cancelCategory()">
+    <div class="category-modal" role="dialog" aria-modal="true" aria-labelledby="category-modal-title" @click.outside="cancelCategory()">
+      <h2 id="category-modal-title">Add a main category</h2>
+      <p>These <strong x-text="pendingSelections.length"></strong> variable<span x-show="pendingSelections.length !== 1">s</span> will keep their codebook categories underneath this new category.</p>
+      <label for="main-category-name">Main category</label>
+      <input id="main-category-name" x-ref="categoryName" type="text" x-model="categoryInput" @keydown.enter.prevent="confirmCategory()" placeholder="For example, Alcohol" />
+      <div class="category-picker" x-show="categories.length">
+        <div class="category-picker-label">Existing categories</div>
+        <div class="category-filter"><input type="search" x-model="categoryFilter" placeholder="Search existing categories…" aria-label="Search existing categories" /></div>
+        <template x-if="filteredCategories.length === 0"><p class="empty category-empty">No matching category. The entered name will create a new one.</p></template>
+        <template x-for="category in filteredCategories" :key="category">
+          <div class="category-choice" :class="categoryInput.toLocaleLowerCase() === category.toLocaleLowerCase() ? 'active' : ''">
+            <button type="button" class="category-name" @click="chooseCategory(category)">
+              <span x-text="category"></span>
+              <small x-text="currentSelections.filter(item => item.mainCategory === category).length + ' variables'"></small>
+            </button>
+            <button type="button" class="link" @click="renameCategory(category)">Edit</button>
+            <button type="button" class="link danger" @click="deleteCategory(category)">Delete</button>
+          </div>
+        </template>
+      </div>
+      <div class="row modal-actions">
+        <button type="button" class="secondary" @click="cancelCategory()">Cancel</button>
+        <button type="button" @click="confirmCategory()" :disabled="!categoryInput.trim()">Add variables</button>
+      </div>
+    </div>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

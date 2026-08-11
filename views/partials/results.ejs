@@ -1,0 +1,23 @@
+<% if (results.length) { %>
+  <div class="search-result-actions">
+    <button type="button" class="secondary search-select-all">Select all</button>
+  </div>
+<% } %>
+<div class="result-list">
+<% if (!results.length) { %><p class="empty">No variables found.</p><% } %>
+<% results.forEach(v => { %>
+  <div class="result-row" data-variable-id="<%= v.id %>" data-variable-code="<%= v.code %>" data-variable-label="<%= v.label || v.question || v.code %>" data-codebook-category="<%= v.section || v.category || 'Uncategorized' %>">
+    <button type="button" class="result result-open" hx-get="/variable/<%= v.id %>" hx-target="#detail" hx-swap="innerHTML">
+      <div class="result-top">
+        <strong><%= v.code %></strong>
+        <% if (v.codebook_page || v.page) { %><small class="page-chip">Page <%= v.codebook_page || v.page %></small><% } %>
+      </div>
+      <span><%= v.label || v.question || '(No label)' %></span>
+      <% if (v.question_id) { %><small><strong>Question ID:</strong> (<%= v.question_id %>)</small><% } %>
+      <% if (v.section || v.category) { %><small><%= v.section || v.category %></small><% } %>
+      <% if (v.question && v.question !== v.label) { %><small class="result-question"><%= v.question.length > 180 ? v.question.slice(0,180) + '…' : v.question %></small><% } %>
+    </button>
+    <button type="button" class="secondary search-select-item" aria-label="Select <%= v.code %> for export">Select</button>
+  </div>
+<% }) %>
+</div>
