@@ -4,8 +4,4 @@ node_modules/
 .env.*
 !.env.example
 .vercel/
-tmp/
-uploads/
-data/*.sqlite-shm
-data/*.sqlite-wal
 *.log
