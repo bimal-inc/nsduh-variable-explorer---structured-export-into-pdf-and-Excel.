@@ -77,6 +77,10 @@
 
       <aside class="card selection-panel">
         <div class="row between"><h2>Selected</h2><button class="secondary" @click="clearAll()">Clear</button></div>
+        <div class="export-actions top-export-actions">
+          <button @click="exportFile('xlsx')" :disabled="selectedCount===0">Export Excel</button>
+          <button @click="exportFile('pdf')" :disabled="selectedCount===0">Export PDF</button>
+        </div>
         <section class="preset-panel">
           <div class="preset-save-row">
             <input type="text" x-model="presetName" @keydown.enter.prevent="savePreset()" placeholder="Preset name" aria-label="Preset name" />
