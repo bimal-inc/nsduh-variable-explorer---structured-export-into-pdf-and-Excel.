@@ -1,5 +1,61 @@
 # NSDUH Variable Explorer
 
+## Visual walkthrough
+
+### 1. Explorer overview and codebook selection
+
+Choose the active codebook, upload a locally parsed NSDUH codebook, search the variable library, and manage the current selection from one workspace. The three-column layout keeps search results, variable details, and selected variables visible together.
+
+![NSDUH Variable Explorer overview](<screenshots/Screenshot 2026-08-11 at 6.57.53 PM.png>)
+
+### 2. Create or manage a main category
+
+After selecting one or many variables, the category dialog creates a project-specific main category above the original codebook categories. The current search term is proposed automatically. Existing categories are searchable and can be selected, renamed, or deleted.
+
+![Create and manage a main category](<screenshots/Screenshot 2026-08-11 at 6.58.10 PM.png>)
+
+### 3. Reuse an existing category for a new search
+
+Different searches can feed the same main category. For example, variables found through several alcohol-related keywords can all be assigned to the existing `Alcohol` category instead of producing duplicate or misspelled categories.
+
+![Reuse an existing Alcohol category](<screenshots/Screenshot 2026-08-11 at 6.58.33 PM.png>)
+
+### 4. Review selected variables as a hierarchy
+
+The Selected panel groups variables under the user-defined main category and then under their original codebook subcategories. It displays category totals and supports preset saving, selected-variable search, individual removal, and removal of an entire main category.
+
+![Hierarchically organized selected variables](<screenshots/Screenshot 2026-08-11 at 6.58.56 PM.png>)
+
+### 5. Inspect complete variable details
+
+Selecting a search result or clicking a variable in the Selected panel opens its detailed codebook record. The view includes section, Question ID, codebook/PDF pages, length, variable label, full question wording, response codes, frequencies, and percentages. Individual value rows can be selected when only part of a response table should be exported.
+
+![Detailed variable and response-code view](<screenshots/Screenshot 2026-08-11 at 6.59.55 PM.png>)
+
+### 6. PDF table of contents
+
+The PDF begins with a linked hierarchical table of contents. Main categories show total variable counts, codebook subcategories appear underneath, and page links jump to the corresponding section of the export.
+
+![PDF hierarchical table of contents](<screenshots/Screenshot 2026-08-11 at 7.01.52 PM.png>)
+
+### 7. PDF variable pages
+
+PDF detail pages preserve a compact codebook-style structure: category headings, Question IDs, variable codes and labels, response descriptions, dotted leaders, frequencies, and percentages.
+
+![PDF variable detail pages](<screenshots/Screenshot 2026-08-11 at 7.02.02 PM.png>)
+
+### 8. Excel table of contents
+
+The Excel workbook includes a dedicated Table of Contents worksheet with the total variable count and clickable links into the Variables worksheet. This makes large selection exports easier to navigate and review.
+
+![Excel table of contents worksheet](<screenshots/Screenshot 2026-08-11 at 7.02.32 PM.png>)
+
+### 9. Excel variable worksheet
+
+The Variables worksheet presents question wording, Question ID and variable code, codebook page, response values, frequency, and percentage in a structured research-sheet layout suitable for filtering, annotation, and handoff.
+
+![Excel variables worksheet](<screenshots/Screenshot 2026-08-11 at 7.02.41 PM.png>)
+
 A research-focused browser for exploring, organizing, and exporting variables from National Survey on Drug Use and Health (NSDUH) codebooks.
 
 The application combines a Node.js/Express interface, a Python PDF parser, SQLite storage, HTMX, and Alpine.js. It is designed for the variable-discovery and codebook-organization stage of a research project—not as a replacement for SAMHSA's official analysis systems or documentation.
@@ -91,62 +147,6 @@ Presets are not user accounts and are not synchronized across browsers or device
   - Heading 1: user-defined main category;
   - Heading 2: original codebook subcategory.
 - Include question wording, identifiers, pages, labels, response rows, frequency, and percentage where available.
-
-## Visual walkthrough
-
-### 1. Explorer overview and codebook selection
-
-Choose the active codebook, upload a locally parsed NSDUH codebook, search the variable library, and manage the current selection from one workspace. The three-column layout keeps search results, variable details, and selected variables visible together.
-
-![NSDUH Variable Explorer overview](<screenshots/Screenshot 2026-08-11 at 6.57.53 PM.png>)
-
-### 2. Create or manage a main category
-
-After selecting one or many variables, the category dialog creates a project-specific main category above the original codebook categories. The current search term is proposed automatically. Existing categories are searchable and can be selected, renamed, or deleted.
-
-![Create and manage a main category](<screenshots/Screenshot 2026-08-11 at 6.58.10 PM.png>)
-
-### 3. Reuse an existing category for a new search
-
-Different searches can feed the same main category. For example, variables found through several alcohol-related keywords can all be assigned to the existing `Alcohol` category instead of producing duplicate or misspelled categories.
-
-![Reuse an existing Alcohol category](<screenshots/Screenshot 2026-08-11 at 6.58.33 PM.png>)
-
-### 4. Review selected variables as a hierarchy
-
-The Selected panel groups variables under the user-defined main category and then under their original codebook subcategories. It displays category totals and supports preset saving, selected-variable search, individual removal, and removal of an entire main category.
-
-![Hierarchically organized selected variables](<screenshots/Screenshot 2026-08-11 at 6.58.56 PM.png>)
-
-### 5. Inspect complete variable details
-
-Selecting a search result or clicking a variable in the Selected panel opens its detailed codebook record. The view includes section, Question ID, codebook/PDF pages, length, variable label, full question wording, response codes, frequencies, and percentages. Individual value rows can be selected when only part of a response table should be exported.
-
-![Detailed variable and response-code view](<screenshots/Screenshot 2026-08-11 at 6.59.55 PM.png>)
-
-### 6. PDF table of contents
-
-The PDF begins with a linked hierarchical table of contents. Main categories show total variable counts, codebook subcategories appear underneath, and page links jump to the corresponding section of the export.
-
-![PDF hierarchical table of contents](<screenshots/Screenshot 2026-08-11 at 7.01.52 PM.png>)
-
-### 7. PDF variable pages
-
-PDF detail pages preserve a compact codebook-style structure: category headings, Question IDs, variable codes and labels, response descriptions, dotted leaders, frequencies, and percentages.
-
-![PDF variable detail pages](<screenshots/Screenshot 2026-08-11 at 7.02.02 PM.png>)
-
-### 8. Excel table of contents
-
-The Excel workbook includes a dedicated Table of Contents worksheet with the total variable count and clickable links into the Variables worksheet. This makes large selection exports easier to navigate and review.
-
-![Excel table of contents worksheet](<screenshots/Screenshot 2026-08-11 at 7.02.32 PM.png>)
-
-### 9. Excel variable worksheet
-
-The Variables worksheet presents question wording, Question ID and variable code, codebook page, response values, frequency, and percentage in a structured research-sheet layout suitable for filtering, annotation, and handoff.
-
-![Excel variables worksheet](<screenshots/Screenshot 2026-08-11 at 7.02.41 PM.png>)
 
 ## Technology
 
